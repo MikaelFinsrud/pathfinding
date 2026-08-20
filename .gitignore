@@ -1,0 +1,38 @@
+# === CLion / JetBrains IDE Settings ===
+.idea/
+# If you want to share shared team configurations (like code styles),
+# uncomment the line above and uncomment the specific overrides below:
+# !.idea/icon.png
+# !.idea/runConfigurations/
+# !.idea/encodings.xml
+# !.idea/codeStyles/
+# !.idea/vcs.xml
+
+# Always ignore the user-specific workspace state
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/dictionary.xml
+.idea/shelf/
+
+
+# === CMake / Build Outputs ===
+# CLion creates directories like cmake-build-debug or cmake-build-release
+cmake-build-*/
+.cmake/
+
+
+# === Compiled Binaries & Object Files ===
+*.o
+*.obj
+*.out
+*.exe
+*.a
+*.lib
+*.so
+*.dll
+*.dylib
+
+
+# === Operating System Files ===
+.DS_Store
+Thumbs.db

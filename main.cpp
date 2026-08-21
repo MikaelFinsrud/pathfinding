@@ -60,7 +60,6 @@ std::vector<Position> getAvailableNeighbours(const Position pos) {
 }
 
 void findShortestPathBFS(const Position start, const Position end) {
-    maze[start.y][start.x] = 'X'; maze[end.y][end.x] = 'X';
 
     std::queue<Position> toVisitQueue;
     std::vector<Position> visitedPositions;
@@ -89,6 +88,8 @@ void findShortestPathBFS(const Position start, const Position end) {
         }
     }
 
+    maze[start.y][start.x] = 'X'; maze[end.y][end.x] = 'X';
+
     if (!foundTarget) {
         std::cerr << "ERROR: Could not join the two paths together!";
         return;
@@ -102,6 +103,8 @@ void findShortestPathBFS(const Position start, const Position end) {
         maze[currentPos.y][currentPos.x] = '\\';
         currentPos = previous[currentPos.y][currentPos.x];
     }
+
+    maze[start.y][start.x] = 'X'; maze[end.y][end.x] = 'X';
 }
 
 Position getValidPosition(std::uniform_int_distribution<std::size_t> xDistrib, std::uniform_int_distribution<std::size_t> yDistrib, std::mt19937& gen) {

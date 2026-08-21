@@ -13,18 +13,33 @@
 #include "PathfindingAlgorithms.h"
 
 const Maze baseMaze {
-    "+----------+",
-    "|....|.....|",
-    "|....|.....|",
-    "|....P.....|",
-    "|....|.....|",
-    "|....|.....|",
-    "+----------+",
+    "+--------------------+",
+    "|....|...............|",
+    "|.---|----.----|-....|",
+    "|........|...........|",
+    "|.---|...|----.|.....|",
+    "|....|...............|",
+    "+--------------------+",
 };
 
 void printMaze(const Maze& maze) {
     for (const std::string& s : maze) {
-        std::cout << s << std::endl;
+        for (const char& c : s) {
+            std::string color{};
+            std::string colorEnd = "\033[0m";
+
+            if (c == '/') {
+                color = "\033[32m";
+            }
+            else if (c == 'X') {
+                color = "\033[33m" ;
+            }
+            else if (c == '|' || c == '-' || c == '+') {
+                color = "\033[31m" ;
+            }
+            std::cout << color << c << colorEnd;
+        }
+        std::cout << '\n';
     }
 }
 

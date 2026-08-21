@@ -32,14 +32,29 @@ namespace {
 
     struct QueueEntry {
         Position pos;
-        int distance;
+        int gCost;
+        int priority;
     };
 
     struct CompareQueueEntry {
         bool operator()(const QueueEntry& a, const QueueEntry& b) const {
-            return a.distance > b.distance;
+            return a.priority > b.priority;
         }
     };
+
+    int calculateHCost(const Position pos, const Position end, const MoveSet moveSet) {
+        const int dx = std::abs(pos.x - end.x);
+        const int dy = std::abs(pos.y - end.y);
+
+        if (moveSet == FourDirection) {
+            return (dx + dy) * 10;
+        }
+
+        const int diagonal = std::min(dx, dy);
+        const int straight = std::max(dx, dy) - diagonal;
+
+        return diagonal * 14 + straight * 10;
+    }
 
     bool isDiagonal(const Position& a, const Position& b) {
         return std::abs(static_cast<int>(a.x) - static_cast<int>(b.x)) == 1 &&
@@ -69,12 +84,18 @@ std::vector<Position> getAvailableNeighbours(const Position pos, const Maze& maz
     return neighbours;
 }
 
-std::optional<Path> findShortestPathDijkstra(const Position start, const Position end, const Maze& maze, const MoveSet moveSet, const bool verbose = true) {
+std::optional<Path> findShortestPathDijkstraAstar(const Position start, const Position end, const Maze& maze, const MoveSet moveSet, const bool verbose, const bool heuristic) {
     std::priority_queue<QueueEntry, std::vector<QueueEntry>, CompareQueueEntry> toVisitQueue;
     std::vector<std::vector<NodeData>> nodeData(maze.size(), std::vector<NodeData>(maze[0].size()));
 
     nodeData[start.y][start.x].distance = 0;
-    toVisitQueue.push({start, 0});
+
+    int startPrio = 0;
+    if (heuristic) {
+        startPrio = calculateHCost(start, end, moveSet);
+    }
+    toVisitQueue.push({start, 0, startPrio});
+
     bool foundTarget = false;
 
     while (!toVisitQueue.empty()) {
@@ -86,7 +107,7 @@ std::optional<Path> findShortestPathDijkstra(const Position start, const Positio
             break;
         }
 
-        if (current.distance > nodeData[current.pos.y][current.pos.x].distance) { // Queue might contain several entries of same node
+        if (current.gCost > nodeData[current.pos.y][current.pos.x].distance) { // Queue might contain several entries of same node
             continue;
         }
 
@@ -110,7 +131,11 @@ std::optional<Path> findShortestPathDijkstra(const Position start, const Positio
                 nodeData[neighbour.y][neighbour.x].distance = newDistance;
                 nodeData[neighbour.y][neighbour.x].previous = current.pos;
 
-                toVisitQueue.push({.pos = neighbour, .distance = nodeData[neighbour.y][neighbour.x].distance});
+                int priority = newDistance;
+                if (heuristic) {
+                    priority += calculateHCost(neighbour, end, moveSet);
+                }
+                toVisitQueue.push({.pos = neighbour, .gCost = newDistance, .priority = priority});
             }
         }
 
@@ -132,6 +157,13 @@ std::optional<Path> findShortestPathDijkstra(const Position start, const Positio
     return path;
 }
 
+std::optional<Path> findShortestPathAstar(const Position start, const Position end, const Maze& maze, const MoveSet moveSet, const bool verbose) {
+    return findShortestPathDijkstraAstar(start, end, maze, moveSet, verbose, true);
+}
+std::optional<Path> findShortestPathDijkstra(const Position start, const Position end, const Maze& maze, const MoveSet moveSet, const bool verbose) {
+    return findShortestPathDijkstraAstar(start, end, maze, moveSet, verbose, false);
+}
+
 std::optional<Path> findShortestPathBFS(const Position start, const Position end, const Maze& maze, const MoveSet moveSet, const bool verbose = true) {
 
     std::queue<Position> toVisitQueue;
@@ -139,6 +171,8 @@ std::optional<Path> findShortestPathBFS(const Position start, const Position end
     std::vector<std::vector<Position>> previous(maze.size(), std::vector<Position>(maze[0].size())); // What position did I come from when I reached (x,y)?
 
     toVisitQueue.push(start);
+    visitedPositions[start.y][start.x] = true;
+
     bool foundTarget = false;
 
     while (!toVisitQueue.empty()) {

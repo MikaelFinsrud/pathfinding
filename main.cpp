@@ -94,10 +94,10 @@ void startPathfinding(Maze& maze, const MoveSet moveSet, Algorithm algorithm, co
         end = getValidPosition(xDistrib, yDistrib, gen, maze);
     } while (end == start);
 
-    const std::optional<Path> bfsPath = algorithm(start, end, maze, moveSet, verbose);
+    const std::optional<Path> path = algorithm(start, end, maze, moveSet, verbose);
 
     if (verbose) {
-        drawPath(maze, start, end, bfsPath);
+        drawPath(maze, start, end, path);
         printMaze(maze);
     }
 }
@@ -167,11 +167,15 @@ int main() {
 
     Maze maze = baseMaze;
     std::cout << "\nBFS:\n";
-    Benchmark(maze, 1000, EightDirection, findShortestPathBFS);
+    Benchmark(maze, 5000, EightDirection, findShortestPathBFS);
 
     maze = baseMaze;
     std::cout << "\nDijkstra:\n";
-    Benchmark(maze, 1000, EightDirection, findShortestPathDijkstra);
+    Benchmark(maze, 5000, EightDirection, findShortestPathDijkstra);
+
+    maze = baseMaze;
+    std::cout << "\nAstar:\n";
+    Benchmark(maze, 5000, EightDirection, findShortestPathAstar);
 
     return 0;
 }

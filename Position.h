@@ -4,17 +4,11 @@
 
 #ifndef PATHFINDING_POSITION_H
 #define PATHFINDING_POSITION_H
-#include <vector>
 
 struct Position {
-    std::size_t x{}, y{};
+    int x{}, y{};
 
-    bool operator==(const Position& other) const {
-        return x == other.x && y == other.y;
-    }
-    bool operator!=(const Position& other) const {
-        return x != other.x || y != other.y;
-    }
+    bool operator==(const Position&) const = default;
 };
 
 #endif //PATHFINDING_POSITION_H

@@ -9,16 +9,17 @@
 #include <vector>
 #include <string>
 #include "Position.h"
+#include <optional>
+
+using Maze = std::vector<std::string>;
+using Path = std::vector<Position>;
 
 enum MoveSet {
     FourDirection = 4,
     EightDirection = 8,
 };
 
-constexpr std::array<int, 8> xOffsets{-1, 1, 0, 0, -1, -1, 1, 1};
-constexpr std::array<int, 8> yOffsets{0, 0, -1, 1, -1, 1, -1, 1};
-
 std::vector<Position> getAvailableNeighbours(Position pos, const std::vector<std::string>& maze, MoveSet moveSet);
-void findShortestPathBFS(Position start, Position end, std::vector<std::string>& maze, MoveSet moveSet);
+std::optional<std::vector<Position>> findShortestPathBFS(Position start, Position end, const std::vector<std::string>& maze, MoveSet moveSet);
 
 #endif //PATHFINDING_PATHFINDINGALGORITHMS_H

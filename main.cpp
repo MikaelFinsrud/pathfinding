@@ -12,24 +12,38 @@
 #include "Position.h"
 #include "PathfindingAlgorithms.h"
 
-
-const std::vector<std::string> baseMaze {
+const Maze baseMaze {
     "+----------+",
     "|....|.....|",
     "|....|.....|",
-    "|....|.....|",
+    "|....P.....|",
     "|....|.....|",
     "|....|.....|",
     "+----------+",
 };
 
-void printMaze(const std::vector<std::string>& maze) {
+void printMaze(const Maze& maze) {
     for (const std::string& s : maze) {
         std::cout << s << std::endl;
     }
 }
 
-Position getValidPosition(std::uniform_int_distribution<std::size_t> xDistrib, std::uniform_int_distribution<std::size_t> yDistrib, std::mt19937& gen, const std::vector<std::string>& maze) {
+void drawPath(Maze& maze, const Position& start, const Position& end, const std::optional<Path>& path) {
+    if (!path.has_value()) {
+        maze[start.y][start.x] = 'X';
+        maze[end.y][end.x] = 'X';
+        return;
+    }
+
+    for (const Position pos : path.value()) {
+        maze[pos.y][pos.x] = '/';
+    }
+
+    maze[start.y][start.x] = 'X';
+    maze[end.y][end.x] = 'X';
+}
+
+Position getValidPosition(std::uniform_int_distribution<int> xDistrib, std::uniform_int_distribution<int> yDistrib, std::mt19937& gen, const Maze& maze) {
     Position pos;
 
     do {
@@ -40,27 +54,28 @@ Position getValidPosition(std::uniform_int_distribution<std::size_t> xDistrib, s
     return pos;
 }
 
-void startPathfinding(std::vector<std::string>& maze, const MoveSet moveSet) {
+void startPathfinding(Maze& maze, const MoveSet moveSet) {
     std::random_device rd;
     std::mt19937 gen(rd());
-    const std::uniform_int_distribution<std::size_t> xDistrib(1, maze[0].size() - 2);
-    const std::uniform_int_distribution<std::size_t> yDistrib(1, maze.size() - 2);
+    const std::uniform_int_distribution<int> xDistrib(1, maze[0].size() - 2);
+    const std::uniform_int_distribution<int> yDistrib(1, maze.size() - 2);
 
     const Position start = getValidPosition(xDistrib, yDistrib, gen, maze);
 
     Position end{};
     do {
-        std::cout << end.x << end.y << std::endl;
         end = getValidPosition(xDistrib, yDistrib, gen, maze);
     } while (end == start);
 
     std::cout << "BFS: \n";
-    findShortestPathBFS(start, end, maze, moveSet);
+    const std::optional<Path> bfsPath = findShortestPathBFS(start, end, maze, moveSet);
+
+    drawPath(maze, start, end, bfsPath);
     printMaze(maze);
 }
 
 int main() {
-    std::vector<std::string> maze = baseMaze;
+    Maze maze = baseMaze;
     startPathfinding(maze, FourDirection);
 
     return 0;

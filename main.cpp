@@ -9,17 +9,33 @@
 #include <array>
 #include <algorithm>
 #include <random>
+#include <chrono>
 #include "Position.h"
 #include "PathfindingAlgorithms.h"
 
 const Maze baseMaze {
-    "+--------------------+",
-    "|....|...............|",
-    "|.---|----.----|-....|",
-    "|........|...........|",
-    "|.---|...|----.|.....|",
-    "|....|...............|",
-    "+--------------------+",
+    "+--------------------+--------------------+--------------------+",
+    "|....|...............---|...|--.--|.....---|...|--.--|.........|",
+    "|.---|-.----.--|-....---|...|--.--|.....---|...|--.--|.........|",
+    "|....|...|...........---|...|--.--|.....---|...|--.--|.........|",
+    "|.---|...|--.--|.....---|...|--.--|.....---|...|--.--|.........|",
+    "|..............|.......................................|.......|",
+    "|....|...............---|...|--.--|.....---|...|--.--|.........|",
+    "|.---|-.----.--|-....---|...|--.--|.....---|...|--.--|.........|",
+    "|....|...|...........---|...|--.--|.....---|...|--.--|.........|",
+    "|.---|...|--.--|.....---|...|--.--|.....---|...|--.--|.........|",
+    "|..............|.......................................|.......|",
+    "|....|...............---|...|--.--|.....---|...|--.--|.........|",
+    "|.---|-.----.--|-....---|...|--.--|.....---|...|--.--|.........|",
+    "|....|...|...........---|...|--.--|.....---|...|--.--|.........|",
+    "|.---|...|--.--|.....---|...|--.--|.....---|...|--.--|.........|",
+    "|..............|.......................................|.......|",
+    "|....|...............---|...|--.--|.....---|...|--.--|.........|",
+    "|.---|-.----.--|-....---|...|--.--|.....---|...|--.--|.........|",
+    "|....|...|...........---|...|--.--|.....---|...|--.--|.........|",
+    "|.---|...|--.--|.....---|...|--.--|.....---|...|--.--|.........|",
+    "|..............|...................|...................|.......|",
+    "+--------------------------------------------------------------+",
 };
 
 void printMaze(const Maze& maze) {
@@ -69,7 +85,8 @@ Position getValidPosition(std::uniform_int_distribution<int> xDistrib, std::unif
     return pos;
 }
 
-void startPathfinding(Maze& maze, const MoveSet moveSet) {
+template <typename Algorithm>
+void startPathfinding(Maze& maze, const MoveSet moveSet, Algorithm algorithm, const bool verbose) {
     std::random_device rd;
     std::mt19937 gen(rd());
     const std::uniform_int_distribution<int> xDistrib(1, maze[0].size() - 2);
@@ -82,16 +99,38 @@ void startPathfinding(Maze& maze, const MoveSet moveSet) {
         end = getValidPosition(xDistrib, yDistrib, gen, maze);
     } while (end == start);
 
-    std::cout << "BFS: \n";
-    const std::optional<Path> bfsPath = findShortestPathBFS(start, end, maze, moveSet);
+    const std::optional<Path> bfsPath = algorithm(start, end, maze, moveSet, verbose);
 
-    drawPath(maze, start, end, bfsPath);
-    printMaze(maze);
+    if (verbose) {
+        drawPath(maze, start, end, bfsPath);
+        printMaze(maze);
+    }
+}
+
+template <typename Algorithm>
+void Benchmark(Maze& maze, const int iterations, MoveSet moveSet, Algorithm algorithm) {
+    const auto start = std::chrono::steady_clock::now();
+
+    for (int i = 0; i < iterations; i++) {
+        startPathfinding(maze, moveSet, algorithm, i==iterations-1);
+    }
+
+    const auto end = std::chrono::steady_clock::now();
+    const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+
+    std::cout << "\tIterations: " << iterations << '\n';
+    std::cout << "\tTime elapsed: " << elapsed.count() << '\n';
 }
 
 int main() {
     Maze maze = baseMaze;
-    startPathfinding(maze, FourDirection);
+
+    std::cout << "\nBFS:\n";
+    Benchmark(maze, 1000, EightDirection, findShortestPathBFS);
+
+    maze = baseMaze;
+    std::cout << "\nDijkstra:\n";
+    Benchmark(maze, 1000, EightDirection, findShortestPathDijkstra);
 
     return 0;
 }

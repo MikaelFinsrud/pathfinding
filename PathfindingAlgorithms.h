@@ -20,6 +20,7 @@ enum MoveSet {
 };
 
 std::vector<Position> getAvailableNeighbours(Position pos, const std::vector<std::string>& maze, MoveSet moveSet);
-std::optional<std::vector<Position>> findShortestPathBFS(Position start, Position end, const std::vector<std::string>& maze, MoveSet moveSet);
+std::optional<std::vector<Position>> findShortestPathBFS(Position start, Position end, const std::vector<std::string>& maze, MoveSet moveSet, bool verbose);
+std::optional<Path> findShortestPathDijkstra(Position start, Position end, const Maze& maze, MoveSet moveSet, bool verbose);
 
 #endif //PATHFINDING_PATHFINDINGALGORITHMS_H

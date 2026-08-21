@@ -4,18 +4,46 @@
 #include <algorithm>
 #include <iostream>
 #include "PathfindingAlgorithms.h"
+#include <limits>
+#include <optional>
+#include <queue>
 
 namespace {
-    Path reconstructPath(const std::vector<std::vector<Position>>& previous, const Position start, const Position end) {
+    template <typename GetPrevious>
+    Path reconstructPath(const Position start, const Position end, GetPrevious getPrevious) {
         Path path;
         Position currentPos = end;
 
         while (currentPos != start) {
-            currentPos = previous[currentPos.y][currentPos.x];
             path.push_back(currentPos);
+            currentPos = getPrevious(currentPos);
         }
 
+        path.push_back(start);
+
         return path;
+    }
+
+    struct NodeData {
+        bool visited = false;
+        Position previous;
+        int distance = std::numeric_limits<int>::max();
+    };
+
+    struct QueueEntry {
+        Position pos;
+        int distance;
+    };
+
+    struct CompareQueueEntry {
+        bool operator()(const QueueEntry& a, const QueueEntry& b) const {
+            return a.distance > b.distance;
+        }
+    };
+
+    bool isDiagonal(const Position& a, const Position& b) {
+        return std::abs(static_cast<int>(a.x) - static_cast<int>(b.x)) == 1 &&
+               std::abs(static_cast<int>(a.y) - static_cast<int>(b.y)) == 1;
     }
 
     constexpr std::array<int, 8> xOffsets{-1, 1, 0, 0, -1, -1, 1, 1};
@@ -41,7 +69,70 @@ std::vector<Position> getAvailableNeighbours(const Position pos, const Maze& maz
     return neighbours;
 }
 
-std::optional<Path> findShortestPathBFS(const Position start, const Position end, const Maze& maze, const MoveSet moveSet) {
+std::optional<Path> findShortestPathDijkstra(const Position start, const Position end, const Maze& maze, const MoveSet moveSet, const bool verbose = true) {
+    std::priority_queue<QueueEntry, std::vector<QueueEntry>, CompareQueueEntry> toVisitQueue;
+    std::vector<std::vector<NodeData>> nodeData(maze.size(), std::vector<NodeData>(maze[0].size()));
+
+    nodeData[start.y][start.x].distance = 0;
+    toVisitQueue.push({start, 0});
+    bool foundTarget = false;
+
+    while (!toVisitQueue.empty()) {
+        QueueEntry current = toVisitQueue.top();
+        toVisitQueue.pop();
+
+        if (current.pos == end) {
+            foundTarget = true;
+            break;
+        }
+
+        if (current.distance > nodeData[current.pos.y][current.pos.x].distance) { // Queue might contain several entries of same node
+            continue;
+        }
+
+        const std::vector<Position> neighbours = getAvailableNeighbours(current.pos, maze, moveSet);
+
+        for (Position neighbour : neighbours) {
+            if (nodeData[neighbour.y][neighbour.x].visited) {
+                continue;
+            }
+
+            int weight = 10;
+
+            if (isDiagonal(current.pos, neighbour)) {
+                weight = 14;
+            }
+
+            const int newDistance = nodeData[current.pos.y][current.pos.x].distance + weight;
+            const int currentDistance = nodeData[neighbour.y][neighbour.x].distance;
+
+            if (newDistance < currentDistance) {
+                nodeData[neighbour.y][neighbour.x].distance = newDistance;
+                nodeData[neighbour.y][neighbour.x].previous = current.pos;
+
+                toVisitQueue.push({.pos = neighbour, .distance = nodeData[neighbour.y][neighbour.x].distance});
+            }
+        }
+
+        nodeData[current.pos.y][current.pos.x].visited = true;
+    }
+
+    if (!foundTarget) {
+        if (verbose) {
+            std::cerr << "ERROR: Could not join the two paths together!\n";
+        }
+
+        return std::nullopt;
+    }
+
+    Path path = reconstructPath(start,end,[&](const Position pos) {
+        return nodeData[pos.y][pos.x].previous;
+    });
+
+    return path;
+}
+
+std::optional<Path> findShortestPathBFS(const Position start, const Position end, const Maze& maze, const MoveSet moveSet, const bool verbose = true) {
 
     std::queue<Position> toVisitQueue;
     std::vector<std::vector<bool>> visitedPositions(maze.size(), std::vector<bool>(maze[0].size(), false));
@@ -71,11 +162,16 @@ std::optional<Path> findShortestPathBFS(const Position start, const Position end
     }
 
     if (!foundTarget) {
-        std::cerr << "ERROR: Could not join the two paths together!";
+        if (verbose) {
+            std::cerr << "ERROR: Could not join the two paths together!\n";
+        }
+
         return std::nullopt;
     }
 
-    Path path = reconstructPath(previous, start, end);
+    Path path = reconstructPath(start,end,[&](const Position pos) {
+        return previous[pos.y][pos.x];
+    });
 
     return path;
 }

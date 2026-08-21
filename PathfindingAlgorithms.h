@@ -10,10 +10,15 @@
 #include <string>
 #include "Position.h"
 
-constexpr std::array<int, 4> xOffsets{-1, 1, 0, 0};
-constexpr std::array<int, 4> yOffsets{0, 0, -1, 1};
+enum MoveSet {
+    FourDirection = 4,
+    EightDirection = 8,
+};
 
-std::vector<Position> getAvailableNeighbours(Position pos, const std::vector<std::string>& maze);
-void findShortestPathBFS(Position start, Position end, std::vector<std::string>& maze);
+constexpr std::array<int, 8> xOffsets{-1, 1, 0, 0, -1, -1, 1, 1};
+constexpr std::array<int, 8> yOffsets{0, 0, -1, 1, -1, 1, -1, 1};
+
+std::vector<Position> getAvailableNeighbours(Position pos, const std::vector<std::string>& maze, MoveSet moveSet);
+void findShortestPathBFS(Position start, Position end, std::vector<std::string>& maze, MoveSet moveSet);
 
 #endif //PATHFINDING_PATHFINDINGALGORITHMS_H

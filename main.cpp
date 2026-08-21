@@ -40,7 +40,7 @@ Position getValidPosition(std::uniform_int_distribution<std::size_t> xDistrib, s
     return pos;
 }
 
-void startPathfinding(std::vector<std::string>& maze) {
+void startPathfinding(std::vector<std::string>& maze, const MoveSet moveSet) {
     std::random_device rd;
     std::mt19937 gen(rd());
     const std::uniform_int_distribution<std::size_t> xDistrib(1, maze[0].size() - 2);
@@ -55,13 +55,13 @@ void startPathfinding(std::vector<std::string>& maze) {
     } while (end == start);
 
     std::cout << "BFS: \n";
-    findShortestPathBFS(start, end, maze);
+    findShortestPathBFS(start, end, maze, moveSet);
     printMaze(maze);
 }
 
 int main() {
     std::vector<std::string> maze = baseMaze;
-    startPathfinding(maze);
+    startPathfinding(maze, FourDirection);
 
     return 0;
 }

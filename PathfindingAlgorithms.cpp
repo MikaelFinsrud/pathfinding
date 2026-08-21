@@ -5,10 +5,10 @@
 #include <iostream>
 #include "PathfindingAlgorithms.h"
 
-std::vector<Position> getAvailableNeighbours(const Position pos, const std::vector<std::string>& maze) {
+std::vector<Position> getAvailableNeighbours(const Position pos, const std::vector<std::string>& maze, const MoveSet moveSet) {
     std::vector<Position> neighbours;
 
-    for (int i = 0; i < xOffsets.size(); i++) {
+    for (int i = 0; i < moveSet; i++) {
         const std::size_t yPos = pos.y + yOffsets[i], xPos = pos.x + xOffsets[i];
 
         if (yPos >= maze.size() || yPos < 0 ||  xPos >= maze[0].size() || xPos < 0) {
@@ -24,7 +24,7 @@ std::vector<Position> getAvailableNeighbours(const Position pos, const std::vect
     return neighbours;
 }
 
-void findShortestPathBFS(const Position start, const Position end, std::vector<std::string>& maze) {
+void findShortestPathBFS(const Position start, const Position end, std::vector<std::string>& maze, const MoveSet moveSet) {
 
     std::queue<Position> toVisitQueue;
     std::vector<Position> visitedPositions;
@@ -42,7 +42,7 @@ void findShortestPathBFS(const Position start, const Position end, std::vector<s
             break;
         }
 
-        std::vector<Position> neighbours = getAvailableNeighbours(current, maze);
+        std::vector<Position> neighbours = getAvailableNeighbours(current, maze, moveSet);
 
         for (const Position& neighbour : neighbours) {
             if (std::find(visitedPositions.begin(), visitedPositions.end(), neighbour) == visitedPositions.end()) {

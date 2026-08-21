@@ -8,9 +8,10 @@
 #include <queue>
 #include <array>
 #include <algorithm>
+#include <random>
 
 struct Position {
-    int x{}, y{};
+    std::size_t x{}, y{};
 
     bool operator==(const Position& other) const {
         return x == other.x && y == other.y;
@@ -24,7 +25,7 @@ std::vector<std::string> maze {
     "+----------+",
     "|....|.....|",
     "|....|.....|",
-    "|....P.....|",
+    "|....|.....|",
     "|....|.....|",
     "|....|.....|",
     "+----------+",
@@ -43,7 +44,7 @@ std::vector<Position> getAvailableNeighbours(const Position pos) {
     std::vector<Position> neighbours;
 
     for (int i = 0; i < xOffsets.size(); i++) {
-        const int yPos = pos.y + yOffsets[i], xPos = pos.x + xOffsets[i];
+        const std::size_t yPos = pos.y + yOffsets[i], xPos = pos.x + xOffsets[i];
 
         if (yPos >= maze.size() || yPos < 0 ||  xPos >= maze[0].size() || xPos < 0) {
             continue;
@@ -58,16 +59,24 @@ std::vector<Position> getAvailableNeighbours(const Position pos) {
     return neighbours;
 }
 
-void findShortestPath(const Position start, const Position end) {
+void findShortestPathBFS(const Position start, const Position end) {
+    maze[start.y][start.x] = 'X'; maze[end.y][end.x] = 'X';
+
     std::queue<Position> toVisitQueue;
     std::vector<Position> visitedPositions;
     std::vector<std::vector<Position>> previous(maze.size(), std::vector<Position>(maze[0].size())); // What position did I come from when I reached (x,y)?
 
     toVisitQueue.push(start);
+    bool foundTarget = false;
 
     while (!toVisitQueue.empty()) {
         const Position current = toVisitQueue.front();
         toVisitQueue.pop();
+
+        if (current == end) {
+            foundTarget = true;
+            break;
+        }
 
         std::vector<Position> neighbours = getAvailableNeighbours(current);
 
@@ -80,6 +89,11 @@ void findShortestPath(const Position start, const Position end) {
         }
     }
 
+    if (!foundTarget) {
+        std::cerr << "ERROR: Could not join the two paths together!";
+        return;
+    }
+
     Position currentPos = end;
     int totalSteps = 0;
 
@@ -88,18 +102,41 @@ void findShortestPath(const Position start, const Position end) {
         maze[currentPos.y][currentPos.x] = '\\';
         currentPos = previous[currentPos.y][currentPos.x];
     }
+}
 
-    maze[start.y][start.x] = 'X'; maze[end.y][end.x] = 'X';
+Position getValidPosition(std::uniform_int_distribution<std::size_t> xDistrib, std::uniform_int_distribution<std::size_t> yDistrib, std::mt19937& gen) {
+    Position pos;
 
-    std::cout << totalSteps << std::endl;
+    do {
+        pos.x = xDistrib(gen);
+        pos.y = yDistrib(gen);
+    } while (maze[pos.y][pos.x] != '.');
+
+    return pos;
+}
+
+void startPathfinding() {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    const std::uniform_int_distribution<std::size_t> xDistrib(1, maze[0].size() - 2);
+    const std::uniform_int_distribution<std::size_t> yDistrib(1, maze.size() - 2);
+
+    const Position start = getValidPosition(xDistrib, yDistrib, gen);
+
+    Position end{};
+    do {
+        std::cout << end.x << end.y << std::endl;
+        end = getValidPosition(xDistrib, yDistrib, gen);
+    } while (end == start);
+
+    std::cout << "BFS: \n";
+    findShortestPathBFS(start, end);
+    printMaze();
 }
 
 
-
 int main() {
-
-    findShortestPath({.x = 4,.y = 5},{.x = 6, .y = 5});
-    printMaze();
+    startPathfinding();
 
     return 0;
 }
